@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        input[type="number"], input[type="date"], input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e7f3e7;
+            border: 1px solid #c1e1c1;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Attendance Tracker</h1>
+    </header>
+
+    <div class="container">
+        <h2>Previous Report</h2>
+        <form id="previous-report-form">
+            <div class="form-group">
+                <label for="report-date">Report Date</label>
+                <input type="date" id="report-date" required>
+            </div>
+            <div class="form-group">
+                <label for="classes-held">Classes Held Till Report</label>
+                <input type="number" id="classes-held" required>
+            </div>
+            <div class="form-group">
+                <label for="classes-attended">Classes Attended Till Report</label>
+                <input type="number" id="classes-attended" required>
+            </div>
+            <input type="submit" value="Update Report">
+        </form>
+
+        <div class="result" id="current-attendance-section" style="display: none;">
+            <h3>Current Attendance Status</h3>
+            <p id="current-attendance">Attendance Percentage: <strong>0%</strong></p>
+        </div>
+
+        <h2>Update Current Attendance</h2>
+        <form id="current-attendance-form" style="display: none;">
+            <div class="form-group">
+                <label for="current-classes-held">Classes Held From Report Date Till Today</label>
+                <input type="number" id="current-classes-held" required>
+            </div>
+            <div class="form-group">
+                <label for="current-classes-attended">Classes Attended From Report Date Till Today</label>
+                <input type="number" id="current-classes-attended" required>
+            </div>
+            <input type="submit" value="Calculate Current Attendance">
+        </form>
+
+        <div class="result" id="future-attendance-section" style="display: none;">
+            <h3>Future Attendance Prediction</h3>
+            <form id="future-prediction-form">
+                <div class="form-group">
+                    <label for="future-classes-held">Future Classes Held</label>
+                    <input type="number" id="future-classes-held" required>
+                </div>
+                <div class="form-group">
+                    <label for="future-classes-leave">Classes You Plan to Leave</label>
+                    <input type="number" id="future-classes-leave" required>
+                </div>
+                <input type="submit" value="Predict Future Attendance">
+            </form>
+
+            <p id="future-attendance">Future Attendance Percentage: <strong>0%</strong></p>
+        </div>
+
+        <!-- New Section for Class Held Calculator -->
+        <h2>Class Held Calculator</h2>
+        <form id="class-held-form">
+            <div class="form-group">
+                <label for="start-date">Start Date</label>
+                <input type="date" id="start-date" required>
+            </div>
+            <div class="form-group">
+                <label for="end-date">End Date</label>
+                <input type="date" id="end-date" required>
+            </div>
+            <input type="submit" value="Calculate Classes Held">
+        </form>
+
+        <div class="result" id="classes-held-result" style="display: none;">
+            <h3>Total Classes Held</h3>
+            <p id="classes-held-count">Total Classes Held: <strong>0</strong></p>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to calculate attendance percentage
+        function calculateAttendance(classesHeld, classesAttended) {
+            return ((classesAttended / classesHeld) * 100).toFixed(2);
+        }
+
+        let previousReportData = {
+            classesHeld: 0,
+            classesAttended: 0,
+            reportDate: '',
+            updatedClassesHeld: 0,
+            updatedClassesAttended: 0,
+        };
+
+        // Routine for class held calculation (Based on the schedule)
+        const routine = {
+            "Monday": 4,
+            "Tuesday": 4,
+            "Wednesday": 5,
+            "Thursday": 4,
+            "Friday": 5,
+            "Saturday": 1
+        };
+
+        // Handle previous report submission
+        document.getElementById('previous-report-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Capture the previous report date and attendance details
+            const reportDate = document.getElementById('report-date').value;
+            const classesHeld = parseInt(document.getElementById('classes-held').value);
+            const classesAttended = parseInt(document.getElementById('classes-attended').value);
+
+            // Store the previous data
+            previousReportData.reportDate = reportDate;
+            previousReportData.classesHeld = classesHeld;
+            previousReportData.classesAttended = classesAttended;
+
+            // Show the current attendance form
+            document.getElementById('current-attendance-form').style.display = 'block';
+            document.getElementById('current-attendance-section').style.display = 'block';
+        });
+
+        // Handle current attendance form submission
+        document.getElementById('current-attendance-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Capture current attendance details (from report date to today)
+            const currentClassesHeld = parseInt(document.getElementById('current-classes-held').value);
+            const currentClassesAttended = parseInt(document.getElementById('current-classes-attended').value);
+
+            // Update the live classes held and attended
+            previousReportData.updatedClassesHeld = previousReportData.classesHeld + currentClassesHeld;
+            previousReportData.updatedClassesAttended = previousReportData.classesAttended + currentClassesAttended;
+
+            // Calculate live attendance percentage
+            const liveAttendancePercentage = calculateAttendance(previousReportData.updatedClassesHeld, previousReportData.updatedClassesAttended);
+            document.getElementById('current-attendance').innerHTML = `Attendance Percentage: <strong>${liveAttendancePercentage}%</strong>`;
+
+            // Show future prediction form
+            document.getElementById('future-attendance-section').style.display = 'block';
+        });
+
+        // Handle future attendance prediction form submission
+        document.getElementById('future-prediction-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Capture future classes held and planned leave data
+            const futureClassesHeld = parseInt(document.getElementById('future-classes-held').value);
+            const futureClassesLeave = parseInt(document.getElementById('future-classes-leave').value);
+
+            // Predict the future attendance after leaving some classes
+            const futureClassesTotalHeld = previousReportData.updatedClassesHeld + futureClassesHeld;
+            const futureClassesAttended = previousReportData.updatedClassesAttended + (futureClassesHeld - futureClassesLeave);
+
+            const futureAttendancePercentage = calculateAttendance(futureClassesTotalHeld, futureClassesAttended);
+            document.getElementById('future-attendance').innerHTML = `Future Attendance Percentage: <strong>${futureAttendancePercentage}%</strong>`;
+        });
+
+        // Handle class held calculator form submission
+        document.getElementById('class-held-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Capture start date and end date
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+            
+            let totalClassesHeld = 0;
+
+            // Calculate the number of classes held between the start and end date
+            while (startDate <= endDate) {
+                const dayOfWeek = startDate.toLocaleString('en-us', { weekday: 'long' });
+                totalClassesHeld += routine[dayOfWeek] || 0;
+                startDate.setDate(startDate.getDate() + 1);
+            }
+
+            // Show the result
+            document.getElementById('classes-held-count').innerHTML = `Total Classes Held: <strong>${totalClassesHeld}</strong>`;
+            document.getElementById('classes-held-result').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
